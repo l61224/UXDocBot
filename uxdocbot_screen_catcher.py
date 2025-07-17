@@ -104,7 +104,7 @@ for app_name in ux_apps:
     time.sleep(DELAY)  # 等頁面query
 
     safe_name = app_name.replace(" ", "_")
-    driver.save(f"{SCREENSHOT_DIR}/{safe_name}.png")
+    driver.save_screenshot(f"{SCREENSHOT_DIR}/{safe_name}.png")
 
 # EndRegion - 跳轉到指定 App & 截取畫面
 # ========================================================================

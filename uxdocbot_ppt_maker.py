@@ -1,6 +1,6 @@
 from pptx import Presentation
 from pptx.util import Inches, Pt
-import os
+import os, time
 from pptx.dml.color import RGBColor
 from pptx.enum.shapes import MSO_AUTO_SHAPE_TYPE
 from pptx.enum.text import PP_ALIGN
@@ -17,12 +17,25 @@ config.read('config.ini', encoding='utf-8')
 ## PPT_Maker
 SCREENSHOT_DIR  = config['PPT_Maker']['ppt_screenshot_path']
 OUTPUT_PPTX     = config['PPT_Maker']['ppt_path']     # PPT path
-UX_APP_MDX      = config['PPT_Maker']['ux_app_mdx']  # 想要製作PPT的UX Apps (define by MDX)
 MASTER_PPT      = config['PPT_Maker']['master_ppt_path'] 
+PPT_UX_APP_MDX  = config['PPT_Maker']['ppt_ux_app_mdx']        # 想要製作投影片的的UX Apps, 將透過此UX Apps結果去尋找圖檔 (define by MDX)
 
 COVER_PAGE_IDX  = int( config['PPT_Maker']['cover_page_idx'])
 FINAL_PAGE_IDX  = int( config['PPT_Maker']['final_page_idx'])
 BLANK_PAGE_IDX  = int( config['PPT_Maker']['blank_page_idx'])
+
+TITLE_LEFT      = float( config['PPT_Maker']['title_left'])
+TITLE_TOP       = float( config['PPT_Maker']['title_top'])
+TITLE_WIDTH     = float( config['PPT_Maker']['title_width'])
+TITLE_HEIGHT    = float( config['PPT_Maker']['title_height'])
+CONTENT_LEFT    = float( config['PPT_Maker']['content_left'])
+CONTENT_TOP     = float( config['PPT_Maker']['content_top'])
+CONTENT_WIDTH   = float( config['PPT_Maker']['content_width'])
+CONTENT_HEIGHT  = float( config['PPT_Maker']['content_height'])
+PICTURE_LEFT    = float( config['PPT_Maker']['picture_left'])
+PICTURE_TOP     = float( config['PPT_Maker']['picture_top'])
+PICTURE_WIDTH   = float( config['PPT_Maker']['picture_width'])
+PICTURE_HEIGHT  = float( config['PPT_Maker']['picture_height'])
 
 ## UX_CS
 ADDRESS         = config['UX_CS']['address']         # Content Store Address
@@ -34,8 +47,10 @@ SSL             = config['UX_CS']['ssl']             # Content Store Using SSL?
 
 ## UX_CS Objects
 dimension_name  = "}APQ UX App"
-attr_name_title = "PPT Title"
-attr_name_func  = "PPT Func Desc"
+attr_name_title = "Page Title"
+attr_name_func  = "Page Description"
+attr_name_idx   = "Page Index"
+attr_name_default = "Code and Description"
 
 # EndRegion - Definition
 # ========================================================================
@@ -44,7 +59,9 @@ attr_name_func  = "PPT Func Desc"
 # Region - Get UX App List
 # === 連接 TM1 ===
 tm1 = TM1Service(address=ADDRESS, port=PORT, user=SYS_USERNAME, password=SYS_PASSWORD, ssl=SSL, namespace=NAMESPACE)
-
+mdx = 'Order( ' + PPT_UX_APP_MDX + ' , [' + dimension_name + '].[' + dimension_name + '].CurrentMember.Properties("' + attr_name_idx + '"), ASC)'
+ux_apps = tm1.elements.execute_set_mdx_element_names( mdx)
+ 
 # EndRegion - Get UX App List
 # ========================================================================
 
@@ -58,53 +75,59 @@ prs = Presentation(MASTER_PPT)
 cover_slide_layout = prs.slide_layouts[COVER_PAGE_IDX]
 cover_slide = prs.slides.add_slide(cover_slide_layout)
 
-blank_slide_layout = prs.slide_layouts[BLANK_PAGE_IDX]  # 空白投影片
+# Blank Page - 空白投影片
+blank_slide_layout = prs.slide_layouts[BLANK_PAGE_IDX]
 
-# === 讀取資料夾中圖片檔案 ===
-for filename in os.listdir(SCREENSHOT_DIR):
-    
-    name_without_ext = os.path.splitext(filename)[0]
-    mdx_title = """
-    SELECT
-    {[}APQ UX App].[""" + name_without_ext + """]} ON ROWS,
-    {[}ElementAttributes_}APQ UX App].[""" + attr_name_title + """]} ON COLUMNS
-    FROM [}ElementAttributes_}APQ UX App]
-    """
-    cells_title = tm1.cubes.cells.execute_mdx(mdx_title)
-    
-    mdx_func = """
-    SELECT
-    {[}APQ UX App].[""" + name_without_ext + """]} ON ROWS,
-    {[}ElementAttributes_}APQ UX App].[""" + attr_name_func + """]} ON COLUMNS
-    FROM [}ElementAttributes_}APQ UX App]
-    """
-    cells_func = tm1.cubes.cells.execute_mdx(mdx_func)
-    
-    for coordinates, cell in cells_title.items():
-        ppt_title = cell["Value"]
-        
-    for coordinates, cell in cells_func.items():
-        func_desc = cell["Value"]
+# EndRegion - Create PPT
+# ========================================================================
 
-    if filename.lower().endswith(".png"):
-        element = os.path.splitext(filename)[0]
-        
-        # 從 TM1 抓取 PPT Title attribute
-        if not ppt_title:
-            ppt_title = element  # 如果沒抓到，用 element 名稱當標題
+# ========================================================================
+# Region - Create Page Title/ Page Description dictionary
+title_dict = tm1.elements.get_attribute_of_elements(
+                dimension_name='}APQ UX App', 
+                hierarchy_name='}APQ UX App',
+                attribute=attr_name_title,
+            )
             
-        # 從 TM1 抓取 PPT Func Desc attribute
+desc_dict = tm1.elements.get_attribute_of_elements(
+                dimension_name='}APQ UX App', 
+                hierarchy_name='}APQ UX App',
+                attribute=attr_name_func,
+            )
+
+code_desc_dict = tm1.elements.get_attribute_of_elements(
+                dimension_name='}APQ UX App', 
+                hierarchy_name='}APQ UX App',
+                attribute=attr_name_default,
+            )
+# EndRegion - Create Page Title/ Page Description dictionary
+# ========================================================================
+
+# ========================================================================
+# Region - Insert Slides by screenshot            
+# === Loop UX App element by sorting ===
+for app_name in ux_apps:
+    filename = app_name + '.png'
+    if app_name:
+        element = app_name
+        # 從 TM1 抓取 Page Title attribute
+        ppt_title = title_dict.get(element, element)
+        if ppt_title == element:
+            ppt_title = code_desc_dict.get(element, element)  # 如果沒抓到，用 Code and Description attribute當標題
+            
+        # 從 TM1 抓取 Page Description attribute
+        func_desc = desc_dict.get(element, element)
         if not func_desc:
             func_desc = element  # 如果沒抓到，用 element 名稱當標題
         
-        # 新增投影片
+        # 新增Blank投影片
         slide = prs.slides.add_slide(blank_slide_layout)
         
         # 加入標題文字
-        t_left      = Inches(0.2)
-        t_top       = Inches(0.15)
-        t_width     = Inches(8.5)
-        t_height    = Inches(0.8)
+        t_left      = Inches(TITLE_LEFT)
+        t_top       = Inches(TITLE_TOP)
+        t_width     = Inches(TITLE_WIDTH)
+        t_height    = Inches(TITLE_HEIGHT)
         t_box = slide.shapes.add_textbox(
                         t_left      # Title X軸
                         , t_top     # Title Y軸
@@ -118,10 +141,10 @@ for filename in os.listdir(SCREENSHOT_DIR):
         
         
         # 插入綠色區塊（矩形）
-        c_left      = Inches(0.2)
-        c_top       = Inches(1.2)
-        c_width     = Inches(8.5)
-        c_height    = Inches(1)
+        c_left      = Inches(CONTENT_LEFT)
+        c_top       = Inches(CONTENT_TOP)
+        c_width     = Inches(CONTENT_WIDTH)
+        c_height    = Inches(CONTENT_HEIGHT)
         c_box = slide.shapes.add_shape(
                         MSO_AUTO_SHAPE_TYPE.RECTANGLE
                         , c_left      # Content X軸
@@ -149,11 +172,11 @@ for filename in os.listdir(SCREENSHOT_DIR):
         p.alignment = PP_ALIGN.LEFT
 
         # 加入圖片
-        img_path = os.path.join(SCREENSHOT_DIR, filename)
-        p_left      = Inches(0.2)
-        p_top       = Inches(2.5)
-        p_width     = Inches(9)
-        p_height    = Inches(4.5)
+        img_path    = os.path.join(SCREENSHOT_DIR, filename)
+        p_left      = Inches(PICTURE_LEFT)
+        p_top       = Inches(PICTURE_TOP)
+        p_width     = Inches(PICTURE_WIDTH)
+        p_height    = Inches(PICTURE_HEIGHT)
         slide.shapes.add_picture(
             img_path
             , p_left    # 圖片X軸
@@ -162,12 +185,19 @@ for filename in os.listdir(SCREENSHOT_DIR):
             , p_height  # 圖片高度
             )
 
-# Final Page - 新增投影片
+# EndRegion - Insert Slides by screenshot
+# ========================================================================
+
+# ========================================================================
+# Region - Final Page
+# Final Page
 final_slide_layout = prs.slide_layouts[FINAL_PAGE_IDX]
 final_slide = prs.slides.add_slide(final_slide_layout)
 
+# EndRegion - Final Page
+# ========================================================================
+
 # === 儲存 PPTX ===
-
-
 prs.save(OUTPUT_PPTX)
 print(f"✅ 已成功產生 PowerPoint：{OUTPUT_PPTX}")
+time.sleep(3)

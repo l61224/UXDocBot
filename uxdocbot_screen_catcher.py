@@ -18,7 +18,7 @@ config.read('config.ini', encoding='utf-8')
 UX_BASE_URL     = config['Screen_Catcher']['ux_base_url']       # UX Homepage URL
 SCREENSHOT_DIR  = config['Screen_Catcher']['screenshot_path']   # 截圖儲存位置
 UX_APP_MDX      = config['Screen_Catcher']['ux_app_mdx']        # 想要截圖的UX Apps (define by MDX)
-DELAY           = int(config['Screen_Catcher']['delay'])        # 每個 App 等待幾秒後截圖
+DELAY           = int(config['Screen_Catcher']['page_delay'])   # 每個 App 等待幾秒後截圖
 
 ## UX_CS
 USERNAME        = config['UX_CS']['login_username']             # 截圖使用者登入帳號
@@ -41,11 +41,14 @@ LOGIN_BUTTON_ID     = "tm1-login-button"
 # ========================================================================
 # Region - Get UX App List
 ## === TM1 連線 ===
-with TM1Service(address=ADDRESS, port=PORT, user=SYS_USERNAME, password=SYS_PASSWORD, ssl=SSL, namespace=NAMESPACE) as tm1:
-    # === 用 MDX 撈出 UX App 維度元素 === 
-    mdx     = UX_APP_MDX
-    ux_apps = tm1.dimensions.execute_mdx("}APQ UX App", mdx)
+# with TM1Service(address=ADDRESS, port=PORT, user=SYS_USERNAME, password=SYS_PASSWORD, ssl=SSL, namespace=NAMESPACE) as tm1:
+ #   === 用 MDX 撈出 UX App 維度元素 === 
+    # mdx     = UX_APP_MDX
+    # ux_apps = tm1.dimensions.execute_mdx("}APQ UX App", mdx)
  
+tm1 = TM1Service(address=ADDRESS, port=PORT, user=SYS_USERNAME, password=SYS_PASSWORD, ssl=SSL, namespace=NAMESPACE)
+ux_apps = tm1.elements.execute_set_mdx_element_names( UX_APP_MDX)
+
 # EndRegion - Get UX App List
 # ========================================================================
 

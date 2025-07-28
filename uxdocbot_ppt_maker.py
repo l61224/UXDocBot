@@ -36,6 +36,11 @@ PICTURE_LEFT    = float( config['PPT_Maker']['picture_left'])
 PICTURE_TOP     = float( config['PPT_Maker']['picture_top'])
 PICTURE_WIDTH   = float( config['PPT_Maker']['picture_width'])
 PICTURE_HEIGHT  = float( config['PPT_Maker']['picture_height'])
+BOX_COLOR       = config['PPT_Maker']['box_color']
+B_R, B_G, B_B   = map(int, BOX_COLOR.split(","))
+TEXT_COLOR      = config['PPT_Maker']['text_color']
+T_R, T_G, T_B   = map(int, TEXT_COLOR.split(","))
+TEXT_SIZE       = float( config['PPT_Maker']['text_size'])
 
 ## UX_CS
 ADDRESS         = config['UX_CS']['address']         # Content Store Address
@@ -46,18 +51,18 @@ SYS_PASSWORD    = config['UX_CS']['system_password'] # Content Store Login Syste
 SSL             = config['UX_CS']['ssl']             # Content Store Using SSL?
 
 ## UX_CS Objects
-dimension_name  = "}APQ UX App"
-attr_name_title = "Page Title"
-attr_name_func  = "Page Description"
-attr_name_idx   = "Page Index"
-attr_name_default = "Code and Description"
+dimension_name      = "}APQ UX App"
+attr_name_title     = "Page Title"
+attr_name_func      = "Page Description"
+attr_name_idx       = "Page Index"
+attr_name_default   = "Code and Description"
 
 # EndRegion - Definition
 # ========================================================================
 
 # ========================================================================
 # Region - Get UX App List
-# === 連接 TM1 ===
+# === TM1 Connection - TM1 連線 ===
 tm1 = TM1Service(address=ADDRESS, port=PORT, user=SYS_USERNAME, password=SYS_PASSWORD, ssl=SSL, namespace=NAMESPACE)
 mdx = 'Order( ' + PPT_UX_APP_MDX + ' , [' + dimension_name + '].[' + dimension_name + '].CurrentMember.Properties("' + attr_name_idx + '"), ASC)'
 ux_apps = tm1.elements.execute_set_mdx_element_names( mdx)
@@ -66,19 +71,19 @@ ux_apps = tm1.elements.execute_set_mdx_element_names( mdx)
 # ========================================================================
 
 # ========================================================================
-# Region - Create PPT
-# === 建立 PPTX ===
-## PPT Template
+# Region - PPT Definition
+# PPT Master Slides Template
 prs = Presentation(MASTER_PPT)
 
-# Cover Page - 封面投影片
+# Page definition
 cover_slide_layout = prs.slide_layouts[COVER_PAGE_IDX]
-cover_slide = prs.slides.add_slide(cover_slide_layout)
-
-# Blank Page - 空白投影片
+final_slide_layout = prs.slide_layouts[FINAL_PAGE_IDX]
 blank_slide_layout = prs.slide_layouts[BLANK_PAGE_IDX]
 
-# EndRegion - Create PPT
+# Create Cover Page - 建立封面投影片
+cover_slide = prs.slides.add_slide(cover_slide_layout)
+
+# EndRegion - PPT Definition
 # ========================================================================
 
 # ========================================================================
@@ -104,35 +109,35 @@ code_desc_dict = tm1.elements.get_attribute_of_elements(
 # ========================================================================
 
 # ========================================================================
-# Region - Insert Slides by screenshot            
+# Region - Insert Slides by screenshot
 # === Loop UX App element by sorting ===
 for app_name in ux_apps:
     filename = app_name + '.png'
     if app_name:
         element = app_name
-        # 從 TM1 抓取 Page Title attribute
+        # Get the Page Title attribute from TM1/ 從 TM1 抓取 Page Title attribute
         ppt_title = title_dict.get(element, element)
         if ppt_title == element:
-            ppt_title = code_desc_dict.get(element, element)  # 如果沒抓到，用 Code and Description attribute當標題
+            ppt_title = code_desc_dict.get(element, element)  # If not caught, use the Code and Description attribute as title/ 如果沒抓到，用 Code and Description attribute當標題
             
-        # 從 TM1 抓取 Page Description attribute
+        # Get the Page Description attribute from TM1/ 從 TM1 抓取 Page Description attribute
         func_desc = desc_dict.get(element, element)
         if not func_desc:
-            func_desc = element  # 如果沒抓到，用 element 名稱當標題
+            func_desc = element  # If not caught, use the element name as content/ 如果沒抓到，用 element 名稱當內容
         
-        # 新增Blank投影片
+        # Create Blank Page - 建立空白投影片
         slide = prs.slides.add_slide(blank_slide_layout)
         
-        # 加入標題文字
+        # Add a title/ 加入標題
         t_left      = Inches(TITLE_LEFT)
         t_top       = Inches(TITLE_TOP)
         t_width     = Inches(TITLE_WIDTH)
         t_height    = Inches(TITLE_HEIGHT)
         t_box = slide.shapes.add_textbox(
-                        t_left      # Title X軸
-                        , t_top     # Title Y軸
-                        , t_width   # Title 寬度
-                        , t_height  # Title 高度
+                        t_left      # Title X-axis/ Title X軸
+                        , t_top     # Title Y-axis/ Title Y軸
+                        , t_width   # Title Width/  Title 寬度
+                        , t_height  # Title Height/ Title 高度
                         )
         tf = t_box.text_frame
         p = tf.add_paragraph()
@@ -147,31 +152,32 @@ for app_name in ux_apps:
         c_height    = Inches(CONTENT_HEIGHT)
         c_box = slide.shapes.add_shape(
                         MSO_AUTO_SHAPE_TYPE.RECTANGLE
-                        , c_left      # Content X軸
-                        , c_top       # Content Y軸
-                        , c_width     # Content 寬度
-                        , c_height    # Content 高度
+                        , c_left      # Content X-axis/ Content X軸
+                        , c_top       # Content Y-axis/ Content Y軸
+                        , c_width     # Content Width/  Content 寬度
+                        , c_height    # Content Height/ Content 高度
                         )
         fill = c_box.fill
         fill.solid()
-        fill.fore_color.rgb = RGBColor(0, 176, 80)  # 綠色
-        c_box.line.fill.background()  # 移除邊框線
+        fill.fore_color.rgb = RGBColor(B_R, B_G, B_B)  # Box Color
+        c_box.line.fill.background()  # Remove border line/ 移除邊框線
         
         tf = c_box.text_frame
-        tf.clear()  # 清掉預設文字
+        tf.clear()  # Clear the default text/ 清掉預設文字
         
-        # 設定文字靠左上
+        # Set text to upper left/ 設定文字靠左上
         tf.margin_left = Pt(5)
         tf.vertical_anchor = MSO_VERTICAL_ANCHOR.TOP
 
         p = tf.paragraphs[0]
-        p.text = f"Function: {func_desc}"
-        p.font_size = Pt(14)
-        p.font.bold = False
-        p.font.color.rgb = RGBColor(255, 255, 255)  # 白字
         p.alignment = PP_ALIGN.LEFT
+        run = p.add_run()
+        run.text = f"Function: {func_desc}"
+        run.font.size = Pt(TEXT_SIZE)  
+        run.font.bold = False
+        run.font.color.rgb = RGBColor(T_R, T_G, T_B)
 
-        # 加入圖片
+        # Add pictures/ 加入圖片
         img_path    = os.path.join(SCREENSHOT_DIR, filename)
         p_left      = Inches(PICTURE_LEFT)
         p_top       = Inches(PICTURE_TOP)
@@ -179,10 +185,10 @@ for app_name in ux_apps:
         p_height    = Inches(PICTURE_HEIGHT)
         slide.shapes.add_picture(
             img_path
-            , p_left    # 圖片X軸
-            , p_top     # 圖片Y軸
-            , p_width   # 圖片寬度
-            , p_height  # 圖片高度
+            , p_left    # Picture X-axis/ 圖片X軸
+            , p_top     # Picture Y-axis/ 圖片Y軸
+            , p_width   # Picture Width/  圖片寬度
+            , p_height  # Picture Height/ 圖片高度
             )
 
 # EndRegion - Insert Slides by screenshot
@@ -190,14 +196,13 @@ for app_name in ux_apps:
 
 # ========================================================================
 # Region - Final Page
-# Final Page
-final_slide_layout = prs.slide_layouts[FINAL_PAGE_IDX]
+# Create Final Page/ 建立尾頁
 final_slide = prs.slides.add_slide(final_slide_layout)
 
 # EndRegion - Final Page
 # ========================================================================
 
-# === 儲存 PPTX ===
+# === Save PPT/ 儲存 PPT ===
 prs.save(OUTPUT_PPTX)
-print(f"✅ 已成功產生 PowerPoint：{OUTPUT_PPTX}")
-time.sleep(3)
+print(f"✅ Successfully generated PowerPoint：{OUTPUT_PPTX}")
+time.sleep(1.5)

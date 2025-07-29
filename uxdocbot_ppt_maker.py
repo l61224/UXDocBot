@@ -205,4 +205,6 @@ final_slide = prs.slides.add_slide(final_slide_layout)
 # === Save PPT/ 儲存 PPT ===
 prs.save(OUTPUT_PPTX)
 print(f"✅ Successfully generated PowerPoint：{OUTPUT_PPTX}")
+
+# === Sleep 1.5 sec for check result/ 等待1.5秒, 查看結果 ===
 time.sleep(1.5)

@@ -109,5 +109,6 @@ for app_name in ux_apps:
 
 print("✅ All App screenshots completed！")
 driver.quit()
+# === Sleep 1.5 sec for check result/ 等待1.5秒, 查看結果 ===
 time.sleep(1.5)
 

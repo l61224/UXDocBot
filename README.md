@@ -1,4 +1,4 @@
-<img width="460" height="330" alt="DocBot_w_BK" src="https://github.com/user-attachments/assets/ffd62e5d-042d-4e7f-8fb2-7d137ee31272" />
+<img width="300" height="220" alt="DocBot_w_BK" src="https://github.com/user-attachments/assets/ffd62e5d-042d-4e7f-8fb2-7d137ee31272" />
 
 # ❓ Why UXDocBot🤖
 UX page changes frequently, requiring frequent and time-consuming screenshots. Capturing screenshots based on user permissions adds even more time.  
@@ -12,7 +12,7 @@ UXDocBot automates screenshots📸 and PowerPoint creation📋 to save your time
     - Create slides with custom order
     - Easily edit titles and contents of each slide to fit your needs
 
-# 📺 UXDocBot Demo
+# 📺 Demo Video
 <a href="https://l61224.github.io/UXDocBot/demo_video.html">
   <img src="docs/UXDocBot_Demo_Cover.png" width="300" alt="UXDocBot Demo" />
 </a>

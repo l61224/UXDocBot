@@ -65,3 +65,7 @@ Your contributions and suggestions are always welcome — let’s build somethin
 
 # LICENSE
 This project is licensed under the MIT License - see the [LICENSE](https://github.com/l61224/UXDocBot/blob/main/LICENSE) file for details.
+
+# 📺 UXDocBot Demo
+
+▶️ [Watch Demo Video](https://l61224.github.io/UXDocBot/)

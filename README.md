@@ -10,7 +10,12 @@ UXDocBot automates screenshots📸 and PowerPoint creation📋 to save your time
     - Capture screen content based on user permissions
 - **📋PPT Maker** 
     - Create slides with custom order
-    - Easily edit titles and contents of each slide to fit your needs 
+    - Easily edit titles and contents of each slide to fit your needs
+
+# 📺 UXDocBot Demo
+<a href="https://l61224.github.io/UXDocBot/demo_video.html">
+  <img src="docs/UXDocBot_Demo_Cover.png" width="300" alt="UXDocBot Demo" />
+</a>
   
 # 📒 Installation
 #### Install dependencies (Python):
@@ -66,6 +71,5 @@ Your contributions and suggestions are always welcome — let’s build somethin
 # LICENSE
 This project is licensed under the MIT License - see the [LICENSE](https://github.com/l61224/UXDocBot/blob/main/LICENSE) file for details.
 
-# 📺 UXDocBot Demo
 
-▶️ [Watch Demo Video](https://l61224.github.io/UXDocBot/)
+
